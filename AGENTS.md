@@ -148,10 +148,41 @@ clave `(book, chapter, verse)` sola, la segunda nota **no cabe**: SQLite
 rechaza la clave duplicada. El fallo no es perderla en silencio, es que el
 build falla entero y el comentario no se publica.
 
+### Una URL que responde 200 puede ser inservible
+
+Esto se costo un dia entero de pruebas, asi que va aqui.
+
+`curl -L https://api.github.com/repos/.../releases/assets/608475849` con
+`Accept: application/octet-stream` devuelve **200**, los 22.544.384 bytes del
+modulo de KJV y su `sha256` correcto. Por `curl`, el transporte funciona.
+
+En un navegador, la misma peticion da `Failed to fetch`. La razon: el 302 de
+`api.github.com` responde `Access-Control-Allow-Origin: *`, pero la respuesta
+final, servida por `release-assets.githubusercontent.com`, **no responde ninguna**.
+Una redireccion no hereda sus permisos a la respuesta a la que apunta.
+
+Lo mismo pasa con `releases/download`. Y por eso el primer `curl -L` de este
+proyecto dio "funciona" y el primer navegador dio "no funciona", con el mismo
+fichero y el mismo hash.
+
+**La regla:** una URL que va a leer un navegador se comprueba con una cabecera
+`Origin` de otro dominio, y se comprueba en un navegador. No vale `curl -L`.
+
+Por eso el catalogo declara **dos** URLs y ninguna sustituye a la otra:
+
+| Campo | Para quien | Comprobado |
+| --- | --- | --- |
+| `downloadUrl` | clientes nativos | GitHub Releases, correcto |
+| `browserUrl` | navegadores | GitHub Pages, `ACAO: *` tambien en binarios |
+
+Y el gate comprueba que las dos lleven al mismo fichero. Si divergen, el hash no
+cuadra en el cliente y no en el servidor, que es mucho mas dificil de
+diagnosticar.
+
 ## 6. Como trabajar aqui
 
 ```bash
-bun test                            # 237 tests
+bun test                            # 241 tests
 bun run tools/src/cli.ts build      # construye los modulos y el catalogo
 bun run tools/src/cli.ts gate       # tests + integridad + licencias
 bun run tools/src/cli.ts info       # estado
@@ -170,9 +201,12 @@ valida con `openspec validate <nombre>`.
   la persona duena del proyecto, al final, y solo si el proyecto funciona. No es
   una tarea de ningun cambio, y un agente que la incluya en un plan esta
   haciendo algo que no le corresponde.
-- **No se migra el origen de publicacion.** GitHub Releases con tag inmutable
-  mas `latest.json` flotante es el origen hasta que el catalogo tenga unos
-  cientos de modulos. Migrar a R2 es cambiar tres lineas.
+- **No se abandona GitHub Releases como registro.** Sigue siendo el registro
+  inmutable con su tag, y es lo que verifica el gate. GitHub Pages es solo el
+  transporte, construido desde el release. R2 sigue siendo el paso siguiente
+  cuando el ancho de banda de Pages deje de aguantar, y es cambiar la URL de
+  origen en un sitio: la decision de cuando, con el numero medido, esta escrita
+  en `openspec/changes/archive/2026-10-03-phase-1-transporte-web/tasks.md`.
 - **No se anade una dependencia para algo que hace la plataforma.** El proyecto
   es Bun con cero dependencias en tiempo de ejecucion. `node:crypto`, `node:zlib`
   y `bun:sqlite` son plataforma, no dependencias. `pysword` se uso como paso
