@@ -1,34 +1,49 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { construirTodo, escribirCatalogo, ETIQUETA_POR_DEFECTO } from "../src/construirCatalogo.ts";
 import { MODULOS, declaracion } from "../src/modulos.ts";
-import { LIBROS } from "../src/libros.ts";
-import { VERSICULOS_CANON } from "../src/libros.ts";
-
-const DIR_BUILD = "modules/build";
-const hayBuild = existsSync(DIR_BUILD) && existsSync(join(DIR_BUILD, "catalog.json"));
+import { LIBROS, VERSICULOS_CANON } from "../src/libros.ts";
 
 /**
- * Estos tests usan los modulos REALES construidos.
+ * Estos tests usan los modulos REALES, construidos por el propio test.
  *
  * Todos los demas tests usan fragmentos de tres versiculos, que no prueban
  * nada sobre el catalogo: prueban que el parser funciona, no que el sistema
  * aguanta una Biblia entera y un comentario de 20.000 notas.
  *
- * Si `modules/build` no existe, estos tests fallan con un mensaje claro en vez
- * de saltarse. Un test que se salta cuando falta lo que tiene que probar es un
- * test que no existe.
+ * El catalogo se construye UNA vez en un directorio temporal y se usa desde
+ * ahi. Antes se leia `modules/build/`, y eso estaba bien en mi maquina y
+ * estaba roto en cualquier otro sitio: los `.amod` estan en `.gitignore` a
+ * proposito (son 80 MB de binarios deterministas), asi que `bun test` fallaba
+ * en un clon limpio con un error que no tenia nada que ver con lo que el test
+ * queria comprobar. La CI lo数组 en el primer push.
+ *
+ * Construir aqui en vez de pedir un build previo tiene un coste, ~40 s, y una
+ * ventaja: el test comprueba el BUILD, no el estado en que alguien dejo el
+ * arbol de trabajo.
  */
+let DIR_BUILD = "";
+const TMP = mkdtempSync(join(tmpdir(), "catalogo-real-"));
+
+beforeAll(async () => {
+  DIR_BUILD = join(TMP, "build");
+  const r = await construirTodo({ destino: DIR_BUILD, silencioso: true });
+  if (r.problemas.length > 0) {
+    throw new Error(`el build de los tests fallo:\n  ${r.problemas.join("\n  ")}`);
+  }
+}, 900_000);
+
+afterAll(() => {
+  rmSync(TMP, { recursive: true, force: true });
+});
+
 function exigirBuild() {
-  if (!hayBuild) {
-    throw new Error(
-      "modules/build no existe. Construye el catalogo con:\n" +
-        "  bun run tools/src/cli.ts build",
-    );
+  if (!DIR_BUILD) {
+    throw new Error("el catalogo de los tests no se construyo; mira beforeAll");
   }
 }
 
