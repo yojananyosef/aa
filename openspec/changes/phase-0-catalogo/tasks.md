@@ -37,8 +37,22 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 - [ ] 3.4 Test de USFM **sin** marcas `\v` → fallo con mensaje explicativo.
 - [ ] 3.5 `tools/src/build.ts` — intermedio → `.amod`. Sin timestamps.
       Test: dos construcciones → sha256 idéntico. Test: ninguna tabla con fecha.
-- [ ] 3.6 Índices `(book, chapter, verse)` para `bible` y `commentary`.
-      Test: `EXPLAIN QUERY PLAN` usa el índice.
+- [ ] 3.6 `tools/src/libros.ts` — tabla canónica de libros KJV (66). Book ids de
+      texto libre prohibidos. Test: `John`, `Psalms`, `1Corinthians` resuelven;
+      un id desconocido se rechaza.
+- [ ] 3.7 **Comentario multi-nota.** `commentary` con `seq` en la PK.
+      Test: dos artículos sobre el mismo versículo coexisten; consulta por
+      `(book, chapter, verse)` devuelve ambos ordenados por `seq`.
+- [ ] 3.8 **Lossless USFM.** Columna `raw` con el fragmento original.
+      Test: versículo con `\addsl` → `raw` lo conserva íntegro y `text` no lo tiene.
+      Test: round-trip desde `raw` es idéntico al original.
+- [ ] 3.9 `tools/src/contentHash.ts` — volcado canónico y su hash.
+      Test: mutar solo el sello `SQLITE_VERSION_NUMBER` (bytes 96-99) deja el
+      `contentHash` intacto y cambia el `sha256`. Este es el test que justifica
+      tener dos hashes.
+- [ ] 3.10 `tools/src/bundle.ts` — empaquetado con zstd.
+      Test: bundle de 2 módulos contiene ambos + `bundle.json` con sha256 y
+      contentHash; y el zip es menor que la suma sin comprimir.
 
 ## Bloque 4 — Contenido real (dominio público)
 

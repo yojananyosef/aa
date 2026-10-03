@@ -72,20 +72,61 @@ CREATE TABLE info (name TEXT NOT NULL, value TEXT NOT NULL,
                    PRIMARY KEY (name));
 
 -- módulo tipo: bible
-CREATE TABLE books  (book TEXT NOT NULL, chapter INTEGER NOT NULL,
-                     verse   INTEGER NOT NULL, text TEXT NOT NULL,
-                     PRIMARY KEY (book, chapter, verse));
-CREATE INDEX books_bcv ON books (book, chapter, verse);
+CREATE TABLE verses (
+  book    TEXT    NOT NULL,   -- id canónico de KJV: 'John', 'Psalms'
+  chapter INTEGER NOT NULL,
+  verse   INTEGER NOT NULL,
+  text    TEXT    NOT NULL,   -- texto plano legible
+  raw     TEXT    NOT NULL,   -- fragmento USFM original (sin pérdida)
+  PRIMARY KEY (book, chapter, verse)   -- la PK ya crea el índice (book,chapter,verse)
+);
 
 -- módulo tipo: commentary
-CREATE TABLE commentary (book TEXT NOT NULL, chapter INTEGER NOT NULL,
-                         verse INTEGER NOT NULL, article TEXT NOT NULL,
-                         PRIMARY KEY (book, chapter, verse));
-CREATE INDEX commentary_bcv ON commentary (book, chapter, verse);
+CREATE TABLE commentary (
+  book    TEXT    NOT NULL,
+  chapter INTEGER NOT NULL,
+  verse   INTEGER NOT NULL,
+  seq     INTEGER NOT NULL,   -- 0, 1, 2... varios artículos por versículo
+  article TEXT    NOT NULL,
+  PRIMARY KEY (book, chapter, verse, seq)
+);
 ```
 
-`versification` = `KJV` en esta fase. Los identificadores de libro son nombres
-en inglés normalizados (`John`, `Psalms`), independientes del idioma del texto.
+`versification` = `KJV` en esta fase. Los identificadores de libro salen de una
+tabla canónica fija, no de texto libre: `John`, `Psalms`, `1Corinthians`. Son
+independientes del idioma del texto, que es lo que permite comparar una Biblia
+en español con un comentario en inglés.
+
+### Dos hashes, dos preguntas
+
+| Campo | Hash de | Responde a |
+|---|---|---|
+| `sha256` | el **fichero** | ¿lo que descargué llegó alterado? |
+| `contentHash` | un volcado **canónico** del contenido lógico | ¿el build es reproducible? |
+
+Deben existir los dos. La cabecera SQLite guarda `SQLITE_VERSION_NUMBER` en los
+bytes 96-99, así que el mismo contenido lógico serializado con dos versiones
+de SQLite produce ficheros distintos:
+
+```
+contenido lógico idéntico:   true
+sha256 original:             ffe1fe38a1...
+sha256 parcheado:            af7791ae8...   <- distinto
+```
+
+Por eso `sha256` **no** sirve como criterio de reproducibilidad. El
+`contentHash` se calcula sobre un volcado canónico (contenido ordenado por
+clave natural, sin metadatos del motor) y sí es estable entre versiones.
+
+El `contentHash` va dentro de la tabla `info` del propio módulo, porque depende
+solo de su contenido. El `sha256` vive en `catalog.json`, porque depende de cómo
+se empaquetó el fichero, no de qué contiene.
+
+### Lossless USFM
+
+`text` es para leer. `raw` es la verdad. El builder nunca descarta marcado: lo
+que no sabe interpretar lo conserva en `raw` y lo reporta como advertencia. Un
+build que pierde texto en silencio es peor que uno que falla.
 
 ## Licencias: conjunto permitido
 
