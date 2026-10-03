@@ -40,6 +40,7 @@ function entrada(over: Partial<EntradaCatalogo> = {}): EntradaCatalogo {
     sizeBytes: 0,
     sha256: "0".repeat(64),
     downloadUrl: "https://example.org/releases/v1/modules/RVR1909_bible.amod",
+    browserUrl: "https://example.org/web/v1/modules/RVR1909_bible.amod",
     ...over,
   };
 }

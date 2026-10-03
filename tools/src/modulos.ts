@@ -33,6 +33,27 @@ export const FORMATO_CATALOGO = "aa-catalog/1";
 export const REPOSITORIO = "yojananyosef/aa";
 export const ORIGEN = `https://github.com/${REPOSITORIO}/releases/download`;
 
+/**
+ * Origen de transporte para navegadores.
+ *
+ * `ORIGEN` sirve para clientes nativos. **No sirve para un navegador**: ni la
+ * pagina de descarga de un release ni la API de assets devuelven
+ * `Access-Control-Allow-Origin` en la respuesta final, y una redireccion no
+ * hereda sus permisos a la respuesta a la que apunta. Comprobado con `fetch`
+ * real en Chrome 154 headless: `Failed to fetch`.
+ *
+ * GitHub Pages si responde `Access-Control-Allow-Origin: *`, tambien en los
+ * binarios. Por eso el catalogo declara las dos URLs y cada cliente elige la que
+ * puede usar, en vez de que el cliente adivine.
+ *
+ * Se deriva del mismo `REPOSITORIO` por el mismo motivo que `ORIGEN`: cambiar
+ * de cuenta es editar una linea.
+ */
+const [USUARIO, REPO] = REPOSITORIO.split("/");
+
+/** Sin barra final, igual que `ORIGEN`: quien concatena pone la suya. */
+export const ORIGEN_WEB = `https://${USUARIO}.github.io/${REPO}`;
+
 export type DeclaracionModulo = {
   id: string;
   type: "bible" | "commentary";

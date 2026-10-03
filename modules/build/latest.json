@@ -1,5 +1,6 @@
 {
   "tag": "v0.1.0",
   "url": "https://github.com/yojananyosef/aa/releases/download/v0.1.0/catalog.json",
-  "catalogSha256": "ad4e2a39892a267124953332324e50e2b415357608796ed8632d03be1ad9b56b"
+  "browserUrl": "https://yojananyosef.github.io/aa/modulos/v0.1.0/catalog.json",
+  "catalogSha256": "9396588a806ac8d1702dd1b575434bb59ae0046fceb259c210289a1335dbc025"
 }

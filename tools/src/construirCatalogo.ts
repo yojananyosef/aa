@@ -22,6 +22,7 @@ import {
   MIN_READER_VERSION,
   MODULOS,
   ORIGEN,
+  ORIGEN_WEB,
   type DeclaracionModulo,
 } from "./modulos.ts";
 import type { Catalogo, EntradaCatalogo } from "./catalog.ts";
@@ -195,6 +196,12 @@ export async function construirTodo(opciones: OpcionesConstruir = {}): Promise<R
       // baja `latest.json` y descarga todo desde ahi. Usar `d.version`
       // produciria una URL que el release no tiene.
       downloadUrl: `${ORIGEN}/${etiqueta}/${nombre}`,
+      // La MISMA etiqueta y el MISMO fichero, en un origen que responde
+      // `Access-Control-Allow-Origin`. `downloadUrl` no sirve para un
+      // navegador; esta si. El sha256 de arriba vale para las dos porque es el
+      // contenido, no la URL. El `latest.json` de mas abajo lleva su propia
+      // `browserUrl` por el mismo motivo.
+      browserUrl: `${ORIGEN_WEB}/modulos/${etiqueta}/${nombre}`,
       // Ruta RELATIVA a la raiz del repositorio. Una absoluta haria que el
       // mismo catalogo fuese valido en una maquina y no en otra.
       path: relative(raiz, m.ruta),
@@ -224,6 +231,7 @@ export async function escribirCatalogo(
   const latest = {
     tag: etiqueta,
     url: `${ORIGEN}/${etiqueta}/catalog.json`,
+    browserUrl: `${ORIGEN_WEB}/modulos/${etiqueta}/catalog.json`,
     catalogSha256: sha256,
   };
   writeFileSync(join(destino, "latest.json"), JSON.stringify(latest, null, 2) + "\n", "utf8");

@@ -22,6 +22,7 @@ export const CAMPOS_MINIMOS = [
   "sizeBytes",
   "sha256",
   "downloadUrl",
+  "browserUrl",
 ] as const;
 
 export type TipoModulo = "bible" | "commentary";
@@ -42,6 +43,15 @@ export type EntradaCatalogo = {
   sizeBytes: number;
   sha256: string;
   downloadUrl: string;
+  /**
+   * URL desde la que un NAVEGADOR puede leer este modulo.
+   *
+   * No es la misma que `downloadUrl` y no la sustituye: `downloadUrl` es la
+   * release de GitHub, que es correcta para clientes nativos y no sirve para un
+   * navegador. Las dos apuntan al mismo fichero y el hash declarado es el mismo,
+   * asi que un cliente puede usar la que pueda y comprobar igual.
+   */
+  browserUrl: string;
   /** Ruta local relativa, usada por la validacion de integridad. */
   path?: string;
 };
@@ -55,6 +65,8 @@ export type Catalogo = {
 export type Latest = {
   tag: string;
   url: string;
+  /** Igual que `url`, pero desde un origen que un navegador puede leer. */
+  browserUrl?: string;
   catalogSha256?: string;
 };
 
@@ -72,6 +84,18 @@ export type ResultadoValidacion = {
 };
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
+
+/**
+ * Ultimo segmento de una URL, sin consultar ni una red.
+ *
+ * Se usa para comparar las dos URLs del catalogo por su fichero, no por su
+ * origen: los origins son distintos a proposito, los ficheros no pueden serlo.
+ */
+function nombreDeFichero(url: string): string {
+  const sinConsulta = url.split(/[?#]/)[0] ?? "";
+  const partes = sinConsulta.split("/");
+  return partes[partes.length - 1] ?? "";
+}
 
 export function leerCatalogo(ruta: string): Catalogo {
   return JSON.parse(readFileSync(ruta, "utf8")) as Catalogo;
@@ -139,6 +163,33 @@ export async function validarCatalogo(
         campo: "sha256",
         motivo: `no es un sha256 hexadecimal de 64 caracteres: "${m.sha256}"`,
       });
+    }
+
+    // Las dos URLs tienen que ser del mismo fichero. Si divergen, un cliente que
+    // elija la de navegador se baja otra cosa que la que el gate verifico, y el
+    // hash no cuadra en el sitio del cliente en vez de en el del servidor.
+    if (m.browserUrl && !/^https:\/\//.test(m.browserUrl)) {
+      problemas.push({
+        clase: "campo",
+        id: m.id,
+        campo: "browserUrl",
+        motivo: `no es una URL https: "${m.browserUrl}"`,
+      });
+    }
+
+    if (m.browserUrl && m.downloadUrl) {
+      const ficheroBrowser = nombreDeFichero(m.browserUrl);
+      const ficheroRelease = nombreDeFichero(m.downloadUrl);
+      if (ficheroBrowser !== ficheroRelease) {
+        problemas.push({
+          clase: "campo",
+          id: m.id,
+          campo: "browserUrl",
+          motivo:
+            `apunta a "${ficheroBrowser}" y downloadUrl a "${ficheroRelease}": ` +
+            "las dos URLs deben llevar al mismo fichero",
+        });
+      }
     }
 
     if (m.type && !TIPOS_ADMITIDOS.includes(m.type)) {

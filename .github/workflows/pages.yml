@@ -1,0 +1,112 @@
+name: pages
+
+# Publica los artefactos del catalogo en un origen que un NAVEGADOR puede leer.
+#
+# Por que existe: `releases/download` de GitHub no responde
+# `Access-Control-Allow-Origin`, ni tampoco la API de assets (su redireccion lo
+# responde, la respuesta final no). Medido con `fetch` real en Chrome headless:
+# `Failed to fetch`. GitHub Pages si responde, tambien en los binarios.
+#
+# Que NO es esto: una copia del catalogo. El release sigue siendo el registro
+# inmutable con su tag. Aqui solo se sirven bytes, construidos desde el release
+# publicado, nunca desde el repositorio: los `.amod` no entran en el historial
+# de git y este repo lleva decidiendo eso desde el principio.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Dos releases a la vez no tienen sentido y la segunda publicacion pisaria la
+# primera. Se cancela en vez de encolarse.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegar.outputs.page_url }}
+    steps:
+      - name: Descargar los artefactos del release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ETIQUETA: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p "sitio/modulos/$ETIQUETA"
+          gh release download "$ETIQUETA" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir "sitio/modulos/$ETIQUETA"
+          ls -la "sitio/modulos/$ETIQUETA"
+
+      # El limite blando de un sitio de Pages son 1 GB. Publicar por encima deja
+      # el sitio sin servir, y el sintoma --"la pagina no carga"-- no dice nada
+      # de la causa. Se comprueba aqui, en el sitio, y no en un comentario.
+      - name: El sitio cabe en el limite de Pages
+        env:
+          ETIQUETA: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          LIMITE=$((1024 * 1024 * 1024))
+          TOTAL=$(du -sb sitio | cut -f1)
+          echo "  sitio:   $TOTAL bytes"
+          echo "  limite:  $LIMITE bytes"
+          if [ "$TOTAL" -ge "$LIMITE" ]; then
+            echo "::error::el sitio ocupa $TOTAL bytes y el limite de Pages es $LIMITE"
+            exit 1
+          fi
+
+      # El puntero flotante va en la RAIZ del sitio, no dentro de la etiqueta: su
+      # trabajo es decir cual es la release vigente, y si viviera bajo la
+      # etiqueta habria que conocerla de antemano, que es justo lo que evita.
+      - name: Publicar el puntero flotante
+        env:
+          ETIQUETA: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          cp "sitio/modulos/$ETIQUETA/latest.json" sitio/latest.json
+          cp "sitio/modulos/$ETIQUETA/catalog.json" sitio/catalog.json
+
+      # Sin esto, `https://yojananyosef.github.io/aa/` devuelve la pagina de
+      # error de Pages en blanco, que a quien llegue al enlace desde el README
+      # le parece que el repositorio esta roto. No es un sitio: es un espejo de
+      # artefactos, y conviene decirlo en la primera linea.
+      - name: Portada minima que diga que aqui hay artefactos
+        run: |
+          cat > sitio/index.html <<'HTML'
+          <!doctype html>
+          <html lang="es">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>aa - artefactos del catalogo</title>
+            <style>
+              body { font: 16px/1.6 system-ui, sans-serif; margin: 3rem auto; max-width: 40rem; padding: 0 1rem; }
+              code { background: #f4f4f4; padding: .1em .3em; }
+            </style>
+          </head>
+          <body>
+            <h1>Artefactos del catalogo</h1>
+            <p>Esto no es un sitio web. Es un origen de descarga para navegadores.</p>
+            <p>Los ficheros de cada release, con su etiqueta en la ruta:</p>
+            <p><code>latest.json</code> dice cual es la release vigente y donde esta.</p>
+            <p>El repositorio, y el resto del proyecto:
+              <a href="https://github.com/yojananyosef/aa">github.com/yojananyosef/aa</a></p>
+          </body>
+          </html>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sitio
+
+      - id: desplegar
+        uses: actions/deploy-pages@v4

@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { escribirAmf, ESQUEMA_BIBLIA, leerInfo } from "../src/amf.ts";
 import { construirBiblia, ErrorBuild } from "../src/build.ts";
 import { formatear } from "../src/gate.ts";
-import { validarCatalogo, type Catalogo } from "../src/catalog.ts";
+import { validarCatalogo, type Catalogo, type EntradaCatalogo } from "../src/catalog.ts";
 import type { Fila } from "../src/contentHash.ts";
 import type { InfoDeclarada } from "../src/build.ts";
 
@@ -178,6 +178,7 @@ describe("negativo: un modulo ya publicado con licencia mala se detecta al leerl
           sizeBytes: bytes.length,
           sha256: "0".repeat(64),
           downloadUrl: "https://example.org/RVRG_bible.amod",
+          browserUrl: "https://example.org/web/RVRG_bible.amod",
           path: ruta,
         },
       ],
@@ -218,6 +219,7 @@ describe("negativo: un modulo ya publicado con licencia mala se detecta al leerl
           sizeBytes: r.bytes,
           sha256: r.sha256,
           downloadUrl: "https://example.org/x.amod",
+          browserUrl: "https://example.org/web/x.amod",
           path: ruta,
         },
       ],
@@ -255,6 +257,7 @@ describe("negativo: un modulo ya publicado con licencia mala se detecta al leerl
           sizeBytes: 100,
           sha256: "a".repeat(64),
           downloadUrl: "https://example.org/x.amod",
+          browserUrl: "https://example.org/web/x.amod",
           path: join(dir, "no-existe.amod"),
         },
       ],
@@ -263,6 +266,75 @@ describe("negativo: un modulo ya publicado con licencia mala se detecta al leerl
     expect(r.ok).toBe(false);
     const p = r.problemas.find((x) => x.clase === "integridad");
     if (p && p.clase === "integridad") expect(p.estado).toBe("missing");
+  });
+});
+
+describe("negativo: el catalogo no puede perder la URL del navegador", async () => {
+  // Sin esto, quitar `browserUrl` en un cambio futuro dejaria el campo fuera de
+  // CAMPOS_MINIMOS y el gate seguiria en verde: el cliente volveria a no poder
+  // descargar nada y nadie se enteraria hasta que alguien lo comprobara a mano
+  // en un navegador.
+  function entradaSinBrowserUrl(browserUrl?: unknown): EntradaCatalogo {
+    const base = {
+      id: "KJV2006",
+      type: "bible" as const,
+      name: "King James Version (2006)",
+      language: "eng",
+      license: "PublicDomain",
+      license_evidence: "https://ebible.org/Scriptures/eng-kjv2006/copr.htm",
+      version: "2006.11",
+      schemaVersion: 3,
+      minReaderVersion: 1,
+      sizeBytes: 100,
+      sha256: "a".repeat(64),
+      downloadUrl: "https://example.org/releases/v1/modules/KJV2006_bible.amod",
+    };
+    return { ...base, browserUrl } as unknown as EntradaCatalogo;
+  }
+
+  test("sin browserUrl el gate falla y nombra el campo", async () => {
+    const catalogo = { format: "aa-catalog/1", version: "v0.0.1", modules: [entradaSinBrowserUrl()] };
+    const r = await validarCatalogo(catalogo as Catalogo, dir);
+    expect(r.ok).toBe(false);
+    const p = r.problemas.find((x) => x.campo === "browserUrl");
+    expect(p).toBeDefined();
+    expect(p?.id).toBe("KJV2006");
+  });
+
+  test("browserUrl vacio tambien falla", async () => {
+    const catalogo = {
+      format: "aa-catalog/1",
+      version: "v0.0.1",
+      modules: [entradaSinBrowserUrl("")],
+    };
+    const r = await validarCatalogo(catalogo as Catalogo, dir);
+    expect(r.ok).toBe(false);
+    expect(r.problemas.some((x) => x.campo === "browserUrl")).toBe(true);
+  });
+
+  test("una browserUrl que no sea https falla", async () => {
+    const catalogo = {
+      format: "aa-catalog/1",
+      version: "v0.0.1",
+      modules: [entradaSinBrowserUrl("http://ejemplo.org/KJV2006_bible.amod")],
+    };
+    const r = await validarCatalogo(catalogo as Catalogo, dir);
+    expect(r.ok).toBe(false);
+    const p = r.problemas.find((x) => x.campo === "browserUrl");
+    expect(p?.motivo).toContain("https");
+  });
+
+  test("browserUrl a un fichero distinto de downloadUrl falla", async () => {
+    const catalogo = {
+      format: "aa-catalog/1",
+      version: "v0.0.1",
+      modules: [entradaSinBrowserUrl("https://example.org/web/OTRO_FICHERO.amod")],
+    };
+    const r = await validarCatalogo(catalogo as Catalogo, dir);
+    expect(r.ok).toBe(false);
+    const p = r.problemas.find((x) => x.campo === "browserUrl");
+    expect(p?.motivo).toContain("KJV2006_bible.amod");
+    expect(p?.motivo).toContain("OTRO_FICHERO.amod");
   });
 });
 
