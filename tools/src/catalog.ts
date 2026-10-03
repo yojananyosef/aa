@@ -6,6 +6,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import { sha256DeFichero, tamanoDeFichero } from "./hash.ts";
 
 export const CAMPOS_MINIMOS = [
@@ -81,6 +82,23 @@ export function leerLatest(ruta: string): Latest {
 }
 
 /**
+ * Resuelve la ruta de un artefacto declarado en el catalogo.
+ *
+ * `path` es relativo a la raiz del repositorio cuando viene de
+ * `construirCatalogo`, pero puede ser absoluta si alguien apunto el catalogo a
+ * una construccion de otra parte. Concatenar a pelo rompia ese caso: una ruta
+ * absoluta concatenada con la raiz produce algo como
+ * `/repo//tmp/build/x.amod`, que no existe, y el modulo se reportaba como
+ * `missing` cuando en realidad estaba ahi. Un gate que confunde "no existe"
+ * con "esta en otro sitio" hace que quien lo lea vaya a buscar un problema que
+ * no tiene.
+ */
+export function resolverArtefacto(raiz: string, m: EntradaCatalogo): string {
+  if (m.path && isAbsolute(m.path)) return m.path;
+  return join(raiz, m.path ?? join("modules", `${m.id}_${m.type}.amod`));
+}
+
+/**
  * Valida el catalogo contra disco.
  *
  * Tres comprobaciones independientes: forma de los campos, integridad de los
@@ -142,7 +160,7 @@ export async function validarCatalogo(
     vistos.add(m.id);
 
     // --- 3. Integridad contra disco ---
-    const rutaArtefacto = m.path ? `${raiz}/${m.path}` : `${raiz}/modules/${m.id}_${m.type}.amod`;
+    const rutaArtefacto = resolverArtefacto(raiz, m);
     const estado = await verificarIntegridad(rutaArtefacto, m.sha256, m.sizeBytes);
 
     if (estado.estado !== "valid") {

@@ -1,0 +1,85 @@
+name: gate
+
+# El gate corre en cada push y en cada PR. Es la unica comprobacion que
+# decide si algo entra, y por eso corre entera: tests, build, integridad y
+# licencias. Un gate que se puede saltarse con un "--no-verify" no es un gate.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Se ejecuta aunque GitHub lo saltaria por conflicto, porque el coste de un
+  # conflicto en el cambio de licencia es mucho mayor que el de reejecutar.
+  merge_group:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.20.0"
+
+      # Los artefactos son deterministas byte a byte, asi que un cambio en el
+      # hash significa un cambio en el CONTENIDO, no en el entorno. Por eso el
+      # build se verifica dos veces y se comparan los sha256: si no coinciden,
+      # el build no es reproducible y no sirve para publicar nada.
+      - name: Instalar Git LFS
+        run: |
+          git lfs install --local
+          git lfs pull
+
+      - name: Tests
+        run: bun test
+
+      - name: Build del catalogo
+        run: bun run tools/src/cli.ts build
+
+      - name: Gate
+        run: bun run tools/src/cli.ts gate
+
+      - name: Validar el catalogo
+        run: bun run tools/src/cli.ts validate
+
+      - name: Bundle y comprobacion de que se puede abrir
+        run: bun run tools/src/cli.ts bundle
+
+      - name: Comprobar reproducibilidad
+        run: bun run tools/scripts/comprobar-reproducible.ts
+
+      - name: Publicar el catalogo como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalogo
+          path: |
+            modules/build/catalog.json
+            modules/build/latest.json
+            modules/build/*.amod
+            modules/build/*.bundle
+
+  # Prueba negativa del gate: se comprueba que el gate RECHAZA lo que tiene que
+  # rechazar. Sin esto, un gate que dejara pasar todo seguiria en verde.
+  #
+  # Se ejecuta en un job aparte y a proposito: si compartiera job con el gate
+  # bueno, un fallo aqui solo se veria si el otro pasara, que es justo el caso
+  # en el que este test mas importa.
+  gate-rechaza-licencia-protegida:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+
+      - name: El gate rechaza un modulo con copyright
+        run: |
+          bun run tools/scripts/probar-rechazo.ts

@@ -68,12 +68,12 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 
 ## Bloque 5 — Cierre
 
-- [ ] 5.1 `bun run gate` ejecuta: tests + integridad + licencias. Sale 0.
-- [ ] 5.2 Workflow de CI que corre `bun run gate` y falla el build si no pasa.
-- [ ] 5.3 `tools/src/cli.ts` con `build`, `validate`, `gate` — usable sin conocer
+- [x] 5.1 `bun run gate` ejecuta: tests + integridad + licencias. Sale 0.
+- [x] 5.2 Workflow de CI que corre `bun run gate` y falla el build si no pasa.
+- [x] 5.3 `tools/src/cli.ts` con `build`, `validate`, `gate` — usable sin conocer
       los módulos internos.
-- [ ] 5.4 `AGENTS.md` con la regla de un solo repo y el enlace a este README.
-- [ ] 5.5 Test negativo end-to-end: meter un módulo con licencia protegida en un
+- [x] 5.4 `AGENTS.md` con la regla de un solo repo y el enlace a este README.
+- [x] 5.5 Test negativo end-to-end: meter un módulo con licencia protegida en un
       directorio temporal, correr `bun run gate`, comprobar que **falla**.
 
 ## Definición de terminado
