@@ -14,7 +14,15 @@ name: pages
 on:
   release:
     types: [published]
+  # Reejecutar a mano una release concreta. Sin esta entrada no se puede elegir el
+  # tag en un relanzamiento manual, y `github.event.release.tag_name` viene
+  # vacio, que es un fallo que no aparece hasta halfway.
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Etiqueta del release a publicar (por ejemplo v0.1.1)"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -35,10 +43,25 @@ jobs:
       name: github-pages
       url: ${{ steps.desplegar.outputs.page_url }}
     steps:
+      - name: Resolver la etiqueta del release
+        id: etiqueta
+        env:
+          DE_EVENTO: ${{ github.event.release.tag_name }}
+          DE_ENTRADA: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          ETIQUETA="${DE_EVENTO:-$DE_ENTRADA}"
+          if [ -z "$ETIQUETA" ]; then
+            echo "::error::no hay etiqueta: ni release publicada ni entrada manual"
+            exit 1
+          fi
+          echo "  release: $ETIQUETA"
+          echo "tag=$ETIQUETA" >> "$GITHUB_OUTPUT"
+
       - name: Descargar los artefactos del release
         env:
           GH_TOKEN: ${{ github.token }}
-          ETIQUETA: ${{ github.event.release.tag_name }}
+          ETIQUETA: ${{ steps.etiqueta.outputs.tag }}
         run: |
           set -euo pipefail
           mkdir -p "sitio/modulos/$ETIQUETA"
@@ -51,8 +74,6 @@ jobs:
       # el sitio sin servir, y el sintoma --"la pagina no carga"-- no dice nada
       # de la causa. Se comprueba aqui, en el sitio, y no en un comentario.
       - name: El sitio cabe en el limite de Pages
-        env:
-          ETIQUETA: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
           LIMITE=$((1024 * 1024 * 1024))
@@ -68,8 +89,6 @@ jobs:
       # trabajo es decir cual es la release vigente, y si viviera bajo la
       # etiqueta habria que conocerla de antemano, que es justo lo que evita.
       - name: Publicar el puntero flotante
-        env:
-          ETIQUETA: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
           cp "sitio/modulos/$ETIQUETA/latest.json" sitio/latest.json
