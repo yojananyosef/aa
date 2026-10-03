@@ -18,13 +18,13 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 
 ## Bloque 2 — Integridad del catálogo
 
-- [ ] 2.1 `tools/src/hash.ts` — sha256 de fichero, streaming.
+- [x] 2.1 `tools/src/hash.ts` — sha256 de fichero, streaming.
       Test: hash conocido de un fixture.
-- [ ] 2.2 `tools/src/catalog.ts` — tipos, lectura, validación de campos mínimos.
+- [x] 2.2 `tools/src/catalog.ts` — tipos, lectura, validación de campos mínimos.
       Test: entrada sin `sha256` o con campo vacío → error nombrando el campo.
-- [ ] 2.3 Validación de integridad: compara sha256 de disco con el declarado.
+- [x] 2.3 Validación de integridad: compara sha256 de disco con el declarado.
       Tests: `valid`, `invalid` (nombra los dos hashes), `missing`.
-- [ ] 2.4 `latest.json` + validación de coherencia con el tag publicado.
+- [x] 2.4 `latest.json` + validación de coherencia con el tag publicado.
       Test: `latest.json` que apunta a tag inexistente → error.
 
 ## Bloque 3 — Formato de módulo
