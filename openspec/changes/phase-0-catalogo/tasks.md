@@ -37,7 +37,7 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 - [ ] 3.4 Test de USFM **sin** marcas `\v` → fallo con mensaje explicativo.
 - [ ] 3.5 `tools/src/build.ts` — intermedio → `.amod`. Sin timestamps.
       Test: dos construcciones → sha256 idéntico. Test: ninguna tabla con fecha.
-- [ ] 3.6 `tools/src/libros.ts` — tabla canónica de libros KJV (66). Book ids de
+- [x] 3.6 `tools/src/libros.ts` — tabla canónica de libros KJV (66). Book ids de
       texto libre prohibidos. Test: `John`, `Psalms`, `1Corinthians` resuelven;
       un id desconocido se rechaza.
 - [ ] 3.7 **Comentario multi-nota.** `commentary` con `seq` en la PK.
