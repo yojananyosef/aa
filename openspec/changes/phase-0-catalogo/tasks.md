@@ -35,7 +35,7 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 - [x] 3.3 `tools/src/usfm.ts` — parser de `\id`, `\h`, `\v` a estructura intermedia.
       Test: USFM mínimo de Juan 3 produce los versículos esperados.
 - [x] 3.4 Test de USFM **sin** marcas `\v` → fallo con mensaje explicativo.
-- [ ] 3.5 `tools/src/build.ts` — intermedio → `.amod`. Sin timestamps.
+- [x] 3.5 `tools/src/build.ts` — intermedio → `.amod`. Sin timestamps.
       Test: dos construcciones → sha256 idéntico. Test: ninguna tabla con fecha.
 - [x] 3.6 `tools/src/libros.ts` — tabla canónica de libros KJV (66). Book ids de
       texto libre prohibidos. Test: `John`, `Psalms`, `1Corinthians` resuelven;

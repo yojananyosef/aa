@@ -130,8 +130,26 @@ function recortarEstructura(bruto: string): string {
  *  - `¶`                        -> se elimina (marca de poema)
  *  - `\*`                       -> escape: el `*` siguiente es literal
  *  - marcador desconocido       -> se conserva su contenido y se avisa
+ *
+ * RECORTE SOLO EN LA CAPA DE FUERA
+ * -------------------------------
+ * Las llamadas recursivas usan `convertir`, que normaliza espacios pero NO
+ * recorta. Si recortaran tambien, un marcador envolvente cuyo contenido acaba en
+ * espacio perderia ese espacio al concatenarse con lo que viene despues:
+ *
+ *     \addsl En el principio \addsl*creo Dios
+ *     -> "En el principio" + "creo Dios" = "En el principiocreo Dios"
+ *
+ * Ese es un cambio de texto biblico por un detalle de implementacion, y es
+ * justo el tipo de fallo que el round-trip con `raw` no detecta por si solo
+ * (el USFM sigue intacto; lo que se altera es la lectura). Por eso el recorte
+ * se hace una sola vez, arriba del todo.
  */
 export function usfmAPlano(raw: string, advertencias?: string[]): string {
+  return convertir(raw, advertencias).trim();
+}
+
+function convertir(raw: string, advertencias?: string[]): string {
   const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   let salida = "";
   let i = 0;
@@ -195,7 +213,7 @@ export function usfmAPlano(raw: string, advertencias?: string[]): string {
         // recursivamente y NO se cortan los atributos aqui.
         const esHoja = cuerpo.indexOf("\\") === -1;
         const entrada = esHoja ? cuerpo.split("|")[0] : cuerpo;
-        salida += usfmAPlano(entrada, advertencias);
+        salida += convertir(entrada, advertencias);
         i = iDespues;
         continue;
       }
@@ -207,7 +225,7 @@ export function usfmAPlano(raw: string, advertencias?: string[]): string {
 
       // Desconocido: se reporta y se conserva el contenido.
       advertencias?.push(`marcador desconocido \\${nombre}; conservado en raw`);
-      salida += usfmAPlano(cuerpo, advertencias);
+      salida += convertir(cuerpo, advertencias);
       i = iDespues;
       continue;
     }
@@ -221,7 +239,8 @@ export function usfmAPlano(raw: string, advertencias?: string[]): string {
     i += 1;
   }
 
-  return salida.replace(/\s+/g, " ").trim();
+  // Solo se colapsan espacios. El recorte lo hace `usfmAPlano`.
+  return salida.replace(/\s+/g, " ");
 }
 
 /**
