@@ -93,6 +93,38 @@ excepción.
 - **AND** ninguno sobrescribe al otro
 - **AND** la consulta por `(book, chapter, verse)` devuelve ambos
 
+### Requirement: Los defectos de la fuente se registran, no se ignoran
+
+Un módulo SHALL declarar en `info` los defectos que tenga su texto fuente: al
+menos la lista de referencias de versículo que el USFM declara pero no trae.
+
+El build SHALL fallar si la fuente tiene defectos, salvo que se pase
+explícitamente `--allow-defects`, en cuyo caso los defectos quedan grabados en
+el módulo y son visibles para el lector.
+
+No se SHALL rellenar un versículo vacío por inferencia. Un versículo inventado
+en una Biblia es peor que un versículo ausente, porque el usuario no tiene
+forma de saber que se lo han rellenado.
+
+#### Scenario: fuente con versículo vacío falla el build
+
+- **WHEN** la fuente declara un versículo sin texto
+- **THEN** el parser lo registra como defecto en vez de abortar
+- **AND** el build devuelve código de salida distinto de 0
+- **AND** el informe nombra el libro y la referencia
+
+#### Scenario: los defectos aceptados quedan grabados en el módulo
+
+- **WHEN** el build se ejecuta con `--allow-defects`
+- **THEN** el módulo se genera
+- **AND** `info` contiene la lista de defectos con sus referencias
+
+#### Scenario: el texto ausente no se inventa
+
+- **WHEN** hay un versículo vacío en la fuente
+- **THEN** el módulo no contiene ninguna fila para esa referencia
+- **AND** el defecto consta en `info` para que el lector pueda avisar
+
 ### Requirement: Construcción determinista
 
 Construir el mismo contenido fuente con el mismo toolchain SHALL producir un

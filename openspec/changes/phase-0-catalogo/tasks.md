@@ -32,9 +32,9 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 - [ ] 3.1 `tools/src/amf.ts` — escritor SQLite. Crea `info` + tablas del tipo.
       Test: el `.amod` generado se abre y `SELECT` sobre `info` devuelve las claves.
 - [ ] 3.2 Test de módulo con `info` incompleto → validación falla nombrando la clave.
-- [ ] 3.3 `tools/src/usfm.ts` — parser de `\id`, `\h`, `\v` a estructura intermedia.
+- [x] 3.3 `tools/src/usfm.ts` — parser de `\id`, `\h`, `\v` a estructura intermedia.
       Test: USFM mínimo de Juan 3 produce los versículos esperados.
-- [ ] 3.4 Test de USFM **sin** marcas `\v` → fallo con mensaje explicativo.
+- [x] 3.4 Test de USFM **sin** marcas `\v` → fallo con mensaje explicativo.
 - [ ] 3.5 `tools/src/build.ts` — intermedio → `.amod`. Sin timestamps.
       Test: dos construcciones → sha256 idéntico. Test: ninguna tabla con fecha.
 - [x] 3.6 `tools/src/libros.ts` — tabla canónica de libros KJV (66). Book ids de
@@ -43,7 +43,7 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 - [ ] 3.7 **Comentario multi-nota.** `commentary` con `seq` en la PK.
       Test: dos artículos sobre el mismo versículo coexisten; consulta por
       `(book, chapter, verse)` devuelve ambos ordenados por `seq`.
-- [ ] 3.8 **Lossless USFM.** Columna `raw` con el fragmento original.
+- [x] 3.8 **Lossless USFM.** Columna `raw` con el fragmento original.
       Test: versículo con `\addsl` → `raw` lo conserva íntegro y `text` no lo tiene.
       Test: round-trip desde `raw` es idéntico al original.
 - [ ] 3.9 `tools/src/contentHash.ts` — volcado canónico y su hash.
