@@ -1,0 +1,16 @@
+{
+  "name": "aa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plataforma de estudio biblico. Catalogo de recursos de dominio publico.",
+  "scripts": {
+    "test": "bun test",
+    "gate": "bun run tools/src/cli.ts gate",
+    "build": "bun run tools/src/cli.ts build",
+    "validate": "bun run tools/src/cli.ts validate"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  }
+}

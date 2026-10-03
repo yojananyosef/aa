@@ -1,0 +1,3 @@
+node_modules/
+*.amod.tmp/
+.DS_Store

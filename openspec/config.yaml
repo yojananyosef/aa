@@ -1,0 +1,67 @@
+schema: spec-driven
+
+context: |
+  PROYECTO
+  "aa" es una plataforma de estudio bíblico para Latinoamérica hispanohablante.
+  Solo contenido de dominio público o CC. App + catálogo. Código abierto.
+
+  RAÍZ DEL PROYECTO: UN SOLO REPO. Monorepo.
+  Está prohibido crear un segundo repositorio. El repositorio anterior, cuando
+  exista, se archiva con un README que apunte aquí — nunca en paralelo.
+  Razón: 14 repositorios previos fracasaron por fragmentación, no por falta
+  de conocimiento técnico.
+
+  ESTADO REAL: este repo empieza vacío. No se assumes que existe código previo.
+
+  ARQUITECTURA (3 capas, no mezclar):
+  1. CATÁLOGO  (control plane) — metadatos, manifiesto, licencia. JSON, pequeño,
+     cambia rápido, cacheado, firmado.
+  2. MÓDULOS   (data plane)      — contenido .amod, inmutable por sha256,
+     grande, cambia por versión.
+  3. APP       (runtime)        — lee 1 y 2. Un solo codebase.
+
+  LENGUAJAS (fijados, no cambiar sin un change de OpenSpec):
+  - tools/, catalog/: TypeScript sobre Bun. Cero dependencias de runtime.
+  - app/: por definir en un change posterior.
+  Razón: el core de datos es SQLite; el shell se decide cuando exista el
+  vertical slice, no antes.
+
+  DISTRIBUCIÓN:
+  - GitHub Releases con tag inmutable como origen.
+  - `latest.json` en main como puntero flotante al tag actual.
+  - Nada de Dropbox ni services de terceros equivalents.
+  - Todo contenido es PD/CC: sin DRM, sin cifrado, sin layer de entitlements.
+
+  CONTENIDO: EXCLUSIVAMENTE dominio público verificado.
+  Cada módulo declara su licencia en el manifiesto y el gate lo hace cumplir.
+  Prohibido incluir texto bajo copyright. Si la licencia no puede probarse
+  PD/CC, el módulo no existe.
+
+  DINERO (alcance de Phase 0): ninguno. El catálogo no cobra.
+  No añadir billing, suscripciones ni monetización en este change.
+
+  IDIOMA: documentos, specs y código en español. Comentarios de código en español.
+
+rules:
+  proposal:
+    - Máximo 400 palabras
+    - Declarar siempre qué queda FUERA de alcance
+    - Si un change no tiene Definition of Done verificable, el change es inválido
+  tasks:
+    - Cada tarea debe ser ejecutable y verificable por sí sola
+    - Máximo 2 horas de trabajo por tarea
+    - Toda tarea que escriba código incluye su test en la misma tarea
+  specs:
+    - Los requisitos usan Escenario WHEN/THEN, no prosa
+    - Todo requisito debe ser verificable automáticamente
+
+operations:
+  apply:
+    guidance:
+      - Antes de escribir código, confirmar que la tarea tiene criterio de aceptación verificable. Si no lo tiene, pararse y preguntar.
+      - No crear archivos fuera de la estructura acordada.
+      - No añadir dependencias sin justificar en la tarea.
+  archive:
+    guidance:
+      - Un change solo se archiva cuando TODAS sus tareas están marcadas y `bun test` pasa.
+      - Archivar es el acto que demuestra que algo terminó. Si queda una tarea sin marcar, no archivar.
