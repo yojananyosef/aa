@@ -71,3 +71,29 @@ se documenta y un catálogo que **se hace cumplir**.
 | Sobre-ingeniería del formato | Solo los tipos que un change posterior vaya a usar: `bible` y `commentary` |
 | USFM como input es un cuello de botella | Se acepta USFM v2/v3; el parser es sustituible porque el `.amod` es el contrato |
 | Licencias mal declaradas | El gate exige evidencia (URL + tipo), no una cadena de texto libre |
+
+## Auditoria de fuentes RVR1909
+
+Al implementar el parser se audito el contenido disponible en dominio publico.
+Resultado, con la fuente concreta y el defecto medido:
+
+| Fuente | Licencia | Capitulos | Texto | Versificacion KJV |
+|---|---|---|---|---|
+| eBible `spaRV1909` USFM | Public Domain | 1189 | **18 versiculos sin texto** | si |
+| eBible `spaRV1909` USFX | Public Domain | 1189 | los mismos 18 | si |
+| eBible `spaRV1909` VPL  | Public Domain | 1189 | los mismos 18 | si |
+| Wikisource (directo) | CC-BY-SA-4.0 | **1164** (faltan 25) | 0 vacios | **no** (10 libros) |
+| SWORD `SpaRV` | Public Domain | sin verificar | sin verificar | declara si |
+| eBible `sparvg` (RVR Gomez) | **copyright 2004-2023** | - | - | gate rechaza |
+
+Las tres exportaciones de eBible fallan en los MISMOS 18 versiculos. Es un
+defecto de su base de datos de origen, no de la serializacion: USFM, USFX y
+VPL son tuberias distintas y coinciden.
+
+Wikisource tiene el texto de los 18 (verificado 18/18), pero le faltan 25
+capitulos enteros y usa otra versificacion en 10 libros: Jueces, Ruth, Salmos,
+Oseas, Joel, Amos, Abdias, 2 Timoteo, Tito y Filemon.
+
+Conclusion: no hay hoy una fuente de RVR1909 que sea a la vez completa,
+KJV-compatible y de dominio publico. La decision queda registrada; no se
+rellenan versiculos por inferencia en ninguna hipotesis.
