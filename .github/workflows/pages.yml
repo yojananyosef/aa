@@ -89,8 +89,17 @@ jobs:
       # trabajo es decir cual es la release vigente, y si viviera bajo la
       # etiqueta habria que conocerla de antemano, que es justo lo que evita.
       - name: Publicar el puntero flotante
+        env:
+          ETIQUETA: ${{ steps.etiqueta.outputs.tag }}
         run: |
           set -euo pipefail
+          for f in latest.json catalog.json; do
+            if [ ! -f "sitio/modulos/$ETIQUETA/$f" ]; then
+              echo "::error::el release $ETIQUETA no trae $f, y sin el no hay puntero flotante"
+              ls -la "sitio/modulos/$ETIQUETA" || true
+              exit 1
+            fi
+          done
           cp "sitio/modulos/$ETIQUETA/latest.json" sitio/latest.json
           cp "sitio/modulos/$ETIQUETA/catalog.json" sitio/catalog.json
 
