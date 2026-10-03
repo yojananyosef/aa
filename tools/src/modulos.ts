@@ -24,9 +24,14 @@ export const FORMATO_CATALOGO = "aa-catalog/1";
  * El tag es inmutable y `latest.json` es el puntero flotante. Es la alternativa
  * a un servicio de alojamiento con cuota: sin coste, sin servidor, y con
  * historial. Cuando el catalogo crece lo bastante se migra el binario, pero el
- * formato del `.amod` no cambia, asi que la migracion es solo la URL.
+ * formato del `.amod` no cambia, asi que la migracion es solo esta constante.
+ *
+ * La URL se deriva del repositorio, no se escribe a mano, para que cambiar de
+ * cuenta o de organizacion sea editar una linea y no buscar el texto dentro
+ * de un JSON.
  */
-export const ORIGEN = "https://github.com/CATALOGO-PENDIENTE/aa/releases/download";
+export const REPOSITORIO = "yojananyosef/aa";
+export const ORIGEN = `https://github.com/${REPOSITORIO}/releases/download`;
 
 export type DeclaracionModulo = {
   id: string;

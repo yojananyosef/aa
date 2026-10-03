@@ -14,7 +14,7 @@
       "minReaderVersion": 1,
       "sizeBytes": 22544384,
       "sha256": "ce0cb1bc4edbf3341d673739539421bbfed3972e39cbac5fc129f35f25324fe9",
-      "downloadUrl": "https://github.com/CATALOGO-PENDIENTE/aa/releases/download/v0.1.0/KJV2006_bible.amod",
+      "downloadUrl": "https://github.com/yojananyosef/aa/releases/download/v0.1.0/KJV2006_bible.amod",
       "path": "modules/build/KJV2006_bible.amod"
     },
     {
@@ -29,7 +29,7 @@
       "minReaderVersion": 1,
       "sizeBytes": 57536512,
       "sha256": "3df25f8286231c344fb8f47ce74a697b40b4cfeffce0dc311ac7aa5f19c1608c",
-      "downloadUrl": "https://github.com/CATALOGO-PENDIENTE/aa/releases/download/v0.1.0/CLARKE_commentary.amod",
+      "downloadUrl": "https://github.com/yojananyosef/aa/releases/download/v0.1.0/CLARKE_commentary.amod",
       "path": "modules/build/CLARKE_commentary.amod"
     }
   ]
