@@ -50,7 +50,7 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
       Test: mutar solo el sello `SQLITE_VERSION_NUMBER` (bytes 96-99) deja el
       `contentHash` intacto y cambia el `sha256`. Este es el test que justifica
       tener dos hashes.
-- [ ] 3.10 `tools/src/bundle.ts` — empaquetado con zstd.
+- [x] 3.10 `tools/src/bundle.ts` — empaquetado con zstd.
       Test: bundle de 2 módulos contiene ambos + `bundle.json` con sha256 y
       contentHash; y el zip es menor que la suma sin comprimir.
 
