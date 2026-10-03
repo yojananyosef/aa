@@ -28,7 +28,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { statSync } from "node:fs";
+import { rmSync, statSync } from "node:fs";
 
 import { evaluar, type Info } from "./gate.ts";
 import { sha256DeFichero } from "./hash.ts";
@@ -426,6 +426,14 @@ export async function escribirAmf(destino: string, entrada: EntradaAmf): Promise
 
   const info = infoDeModulo(entrada);
   const contentHash = contentHashDeTablas(tablasParaVolcado(entrada, info));
+
+  // Un rebuild arranca de cero. Si el fichero ya existe, `create: true` lo
+  // ABRE y las tablas viejas se quedan: el modulo resultante seria una mezcla
+  // del build anterior y este, con filas que nadie pidio y un contentHash que
+  // no corresponde a nada. Sin este borrado, reconstruir dos veces seguidas
+  // falla con "table info already exists" o, peor, construye un modulo
+  // hibrido en silencio.
+  rmSync(destino, { force: true });
 
   const db = new Database(destino, { create: true });
   try {

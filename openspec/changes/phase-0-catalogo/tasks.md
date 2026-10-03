@@ -56,15 +56,15 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 
 ## Bloque 4 — Contenido real (dominio público)
 
-- [ ] 4.1 Localizar y traer a `modules/source/` **RVR1909** (Reina-Valera 1909)
+- [x] 4.1 Localizar y traer a `modules/source/` **RVR1909** (Reina-Valera 1909)
       en USFM, con versículos marcados. Registrar `source` y `license_evidence`.
       Test: el build produce un `.amod` con >31.000 versículos y hash registrado.
-- [ ] 4.2 Traer un comentario clásico de dominio público en USFM (ej. Clarke,
+- [x] 4.2 Traer un comentario clásico de dominio público en USFM (ej. Clarke,
       Benson o Wesley — un solo volumen). Registrar procedencia y evidencia.
       Test: el build produce artículos anclados a versículos verificables.
-- [ ] 4.3 Test de dato: leer Juan 3:16 de RVR1909 y de un comentario, y verificar
+- [x] 4.3 Test de dato: leer Juan 3:16 de RVR1909 y de un comentario, y verificar
       que ambos resuelven. Es la prueba de que catálogo y módulos encajan.
-- [ ] 4.4 `catalog.json` con ambas entradas, `latest.json`, sha256 reales.
+- [x] 4.4 `catalog.json` con ambas entradas, `latest.json`, sha256 reales.
 
 ## Bloque 5 — Cierre
 

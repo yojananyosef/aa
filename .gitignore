@@ -1,3 +1,9 @@
-node_modules/
-*.amod.tmp/
 .DS_Store
+node_modules/
+
+# Artefactos de build: se reconstruyen con `bun run build` y son
+# deterministas byte a byte, asi que no tienen por que estar en git.
+# El sha256 de cada uno vive en modules/build/catalog.json, que si se versiona:
+# es lo que permite comprobar que lo descargado es lo que se publico.
+modules/build/*.amod
+modules/build/*.bundle

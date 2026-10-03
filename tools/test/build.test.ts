@@ -432,9 +432,9 @@ describe("helpers de fuente", () => {
 });
 
 describe("fuente KJV real del repositorio", () => {
-  const dirFuente = "modules/source";
+  const dirFuente = "modules/source/eng-kjv2006";
   const ficheros = existsSync(dirFuente)
-    ? readdirSync(dirFuente).filter((f) => f.includes("eng-kjv")).sort()
+    ? readdirSync(dirFuente).filter((f) => f.endsWith(".usfm") && f.includes("eng-kjv")).sort()
     : [];
 
   // Estos tests usan las 66 fuentes reales de modules/source. Es el unico

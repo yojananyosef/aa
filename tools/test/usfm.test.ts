@@ -1,12 +1,21 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { ErrorParseoUsfm, parseUsfm, usfmAPlano } from "../src/usfm.ts";
 import { LIBROS } from "../src/libros.ts";
 
-const FUENTE = "modules/source";
+/**
+ * Cada TRADUCCION tiene su directorio. No un directorio con todo mezclado: dos
+ * traducciones del mismo libro dan el mismo (book, chapter, verse) y el build
+ * no podria saber cual es la buena. Separarlas por directorio hace que la
+ * ambiguedad sea imposible en vez de detectable.
+ */
+const KJV = "modules/source/eng-kjv2006";
+const RVR = "modules/source/spaRV1909";
 
 function ficheros(termino: string): string[] {
-  return readdirSync(FUENTE).filter((f) => f.endsWith(".usfm") && f.includes(termino));
+  const de = (dir: string) =>
+    existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".usfm") && f.includes(termino)) : [];
+  return [...de(KJV), ...de(RVR)];
 }
 
 describe("usfm a texto plano", () => {
@@ -60,7 +69,7 @@ describe("usfm a texto plano", () => {
 
 describe("parseo de USFM real", () => {
   test("Juan 3 de KJV: capitulo 3 con 36 versiculos", () => {
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "73-JHNeng-kjv2006.usfm");
     const del3 = r.versiculos.filter((v) => v.chapter === 3);
     expect(del3.length).toBe(36);
@@ -68,7 +77,7 @@ describe("parseo de USFM real", () => {
   });
 
   test("Juan 3:16 se lee correctamente y sin marcado", () => {
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     const v = r.versiculos.find((x) => x.chapter === 3 && x.verse === 16)!;
     expect(v.text).toBe(
@@ -79,7 +88,7 @@ describe("parseo de USFM real", () => {
   });
 
   test("el raw de Juan 3:16 conserva el marcado original", () => {
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     const v = r.versiculos.find((x) => x.chapter === 3 && x.verse === 16)!;
     // El Strong's de "God" (G2316) tiene que seguir en raw.
@@ -90,7 +99,7 @@ describe("parseo de USFM real", () => {
 
   test("el texto Added sobrevive en los dos campos", () => {
     // Juan 3:5 KJV lleva +add of+add* (con el prefijo + de continuacion).
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     const v = r.versiculos.find((x) => x.chapter === 3 && x.verse === 5)!;
     expect(v.raw).toContain("add");
@@ -105,7 +114,7 @@ describe("parseo de USFM real", () => {
   });
 
   test("round-trip: el texto plano conserva todas las palabras del raw", () => {
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     for (const v of r.versiculos) {
       // Quita el piloto y compara palabras; el plano no puede perder ninguna.
@@ -122,7 +131,7 @@ describe("parseo de USFM real", () => {
   });
 
   test("RVR1909 Juan 3:16 en espanol", () => {
-    const t = readFileSync(`${FUENTE}/73-JHNspaRV1909.usfm`, "utf8");
+    const t = readFileSync(`${RVR}/73-JHNspaRV1909.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     const v = r.versiculos.find((x) => x.chapter === 3 && x.verse === 16)!;
     expect(v.text).toContain("Porque de tal manera amó Dios al mundo");
@@ -132,8 +141,8 @@ describe("parseo de USFM real", () => {
   test("RVR1909 y KJV anclan el mismo versiculo", () => {
     // Esta es la prueba de que el espacio de nombres funciona:
     // dos idiomas, mismo id de referencia.
-    const es = parseUsfm(readFileSync(`${FUENTE}/73-JHNspaRV1909.usfm`, "utf8"), "a");
-    const en = parseUsfm(readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8"), "b");
+    const es = parseUsfm(readFileSync(`${RVR}/73-JHNspaRV1909.usfm`, "utf8"), "a");
+    const en = parseUsfm(readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8"), "b");
     const a = es.versiculos.find((v) => v.chapter === 3 && v.verse === 16)!;
     const c = en.versiculos.find((v) => v.chapter === 3 && v.verse === 16)!;
     expect(a.book).toBe("John");
@@ -168,7 +177,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
     const avisos = new Set<string>();
 
     for (const f of ficherosRvr) {
-      const r = parseUsfm(readFileSync(`${FUENTE}/${f}`, "utf8"), f);
+      const r = parseUsfm(readFileSync(`${f.includes("spaRV") ? RVR : KJV}/${f}`, "utf8"), f);
       capitulos += r.capitulos;
       versiculos += r.versiculos.length;
       librosVistos.add(r.libro.id);
@@ -193,7 +202,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
     let versiculos = 0;
     const defectos: string[] = [];
     for (const f of ficherosKjv) {
-      const r = parseUsfm(readFileSync(`${FUENTE}/${f}`, "utf8"), f);
+      const r = parseUsfm(readFileSync(`${f.includes("spaRV") ? RVR : KJV}/${f}`, "utf8"), f);
       capitulos += r.capitulos;
       versiculos += r.versiculos.length;
       for (const d of r.defectos) defectos.push(`${d.libro} ${d.chapter}:${d.verse}`);
@@ -209,7 +218,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
     // esta ausente. Se fijan aqui para que una correccion de la fuente se vea.
     const defectos: string[] = [];
     for (const f of ficheros("spaRV1909")) {
-      const r = parseUsfm(readFileSync(`${FUENTE}/${f}`, "utf8"), f);
+      const r = parseUsfm(readFileSync(`${f.includes("spaRV") ? RVR : KJV}/${f}`, "utf8"), f);
       for (const d of r.defectos) defectos.push(`${d.libro} ${d.chapter}:${d.verse}`);
     }
     expect(defectos.length).toBe(18);
@@ -226,7 +235,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
 
   test("2 Cor 13:14 es uno de los defectuosos: la bendicion final falta", () => {
     const r = parseUsfm(
-      readFileSync(`${FUENTE}/77-2COspaRV1909.usfm`, "utf8"),
+      readFileSync(`${RVR}/77-2COspaRV1909.usfm`, "utf8"),
       "2CO",
     );
     expect(r.defectos.some((d) => d.chapter === 13 && d.verse === 14)).toBe(true);
@@ -236,7 +245,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
 
   test("cada libro KJV produce exactamente los versiculos que declara la tabla", () => {
     for (const f of ficheros("eng-kjv2006")) {
-      const r = parseUsfm(readFileSync(`${FUENTE}/${f}`, "utf8"), f);
+      const r = parseUsfm(readFileSync(`${f.includes("spaRV") ? RVR : KJV}/${f}`, "utf8"), f);
       const esperado = LIBROS.find((l) => l.id === r.libro.id)!;
       expect(r.versiculos.length).toBe(esperado.versiculos);
       expect(r.capitulos).toBe(esperado.capitulos);
@@ -246,7 +255,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
 
   test("ningun versiculo presente queda con texto plano vacio", () => {
     for (const f of ficheros("spaRV1909")) {
-      const r = parseUsfm(readFileSync(`${FUENTE}/${f}`, "utf8"), f);
+      const r = parseUsfm(readFileSync(`${f.includes("spaRV") ? RVR : KJV}/${f}`, "utf8"), f);
       for (const v of r.versiculos) {
         expect(v.text.length).toBeGreaterThan(0);
         expect(v.text).not.toContain("\\");
@@ -256,7 +265,7 @@ describe("el canon completo parsea sin perder versiculos", () => {
 
   test("ningun versiculo se queda sin marca de Strong cuando la fuente la traia", () => {
     // Si el parser perdiera el marcado, este test lo diria.
-    const t = readFileSync(`${FUENTE}/73-JHNeng-kjv2006.usfm`, "utf8");
+    const t = readFileSync(`${KJV}/73-JHNeng-kjv2006.usfm`, "utf8");
     const r = parseUsfm(t, "JHN.usfm");
     const conStrong = r.versiculos.filter((v) => v.raw.includes("strong="));
     expect(conStrong.length).toBeGreaterThan(30);
