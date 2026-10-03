@@ -6,8 +6,11 @@ context: |
   Solo contenido de dominio público o CC. App + catálogo. Código abierto.
 
   RAÍZ DEL PROYECTO: UN SOLO REPO. Monorepo.
-  Está prohibido crear un segundo repositorio. El repositorio anterior, cuando
-  exista, se archiva con un README que apunte aquí — nunca en paralelo.
+  Está prohibido crear un segundo repositorio ni trabajar en dos a la vez.
+  Los repositorios anteriores siguen existiendo y NO se tocan: no archivarlos,
+  no borrarlos, no migrar su código. Archivar o borrar repos anteriores es
+  una decisión del propietario del proyecto, se toma al final, y no es una tarea
+  de ningún change hasta que él lo pida explícitamente.
   Razón: 14 repositorios previos fracasaron por fragmentación, no por falta
   de conocimiento técnico.
 
@@ -61,6 +64,7 @@ operations:
       - Antes de escribir código, confirmar que la tarea tiene criterio de aceptación verificable. Si no lo tiene, pararse y preguntar.
       - No crear archivos fuera de la estructura acordada.
       - No añadir dependencias sin justificar en la tarea.
+      - No proponer archivar, borrar ni migrar repositorios anteriores. No es parte de ningún change.
   archive:
     guidance:
       - Un change solo se archiva cuando TODAS sus tareas están marcadas y `bun test` pasa.
