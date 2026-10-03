@@ -4,16 +4,16 @@ Cada tarea incluye su test. Una tarea sin test no está terminada.
 
 ## Bloque 1 — Gate de licencia (el control va primero)
 
-- [ ] 1.1 `tools/src/aceptadas.ts` — conjunto de licencias permitidas y
+- [x] 1.1 `tools/src/aceptadas.ts` — conjunto de licencias permitidas y
       predicado `esLicenciaValida`. Test: acepta las 8 permitidas, rechaza
       `"Copyrighted"`, `"RVR1960"`, `" creatively adapted"`, `""`.
-- [ ] 1.2 `tools/src/gate.ts` — `evaluar(info): Resultado`. Puro, sin I/O.
+- [x] 1.2 `tools/src/gate.ts` — `evaluar(info): Resultado`. Puro, sin I/O.
       Devuelve `{ok, violaciones[]}`. Test: `PublicDomain` sin evidencia → viola;
       `PublicDomain` con URL → ok; CC con URL → ok.
-- [ ] 1.3 Test de auto-declaración: `info` que se autodeclara aprobado sin
+- [x] 1.3 Test de auto-declaración: `info` que se autodeclara aprobado sin
       `license_evidence` sigue siendo rechazado. Cubre el requisito
       "no puede desactivarse desde el propio contenido".
-- [ ] 1.4 Test de campos obligatorios: falta de `origin`, `attribution`,
+- [x] 1.4 Test de campos obligatorios: falta de `origin`, `attribution`,
       `source`, `copyright` → violación nombrando el campo.
 
 ## Bloque 2 — Integridad del catálogo
